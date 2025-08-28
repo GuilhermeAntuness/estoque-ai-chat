@@ -51,7 +51,7 @@ const Sidebar = ({
               value={documentation}
               onChange={(e) => setDocumentation(e.target.value)}
               placeholder="Cole aqui sua documentação operacional..."
-              className="min-h-[200px] bg-input border-border focus:ring-accent resize-none"
+              className="min-h-[120px] bg-input border-border focus:ring-accent resize-none"
             />
           </div>
         </div>
