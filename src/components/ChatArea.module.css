@@ -1,0 +1,23 @@
+/* Custom scrollbar styles for the messages container */
+.messagesContainer::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messagesContainer::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.messagesContainer::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+
+.messagesContainer::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* Firefox scrollbar */
+.messagesContainer {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--border)) transparent;
+}

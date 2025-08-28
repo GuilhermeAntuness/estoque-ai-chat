@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Sidebar from "@/components/Sidebar";
 import ChatArea from "@/components/ChatArea";
+import { getConfig, saveConfig as saveConfigApi } from "@/api/configApi";
+import { sendMessage as sendMessageApi } from "@/api/chatApi";
 
 interface Message {
   role: "user" | "system";
@@ -50,12 +52,9 @@ const Index = () => {
 
   const loadConfig = async () => {
     try {
-      const response = await fetch("/config/");
-      if (response.ok) {
-        const config: Config = await response.json();
-        setApiKey(config.apikey || "");
-        setDocumentation(config.doc || "");
-      }
+      const config: Config = await getConfig();
+      setApiKey(config.apikey || "");
+      setDocumentation(config.doc || "");
     } catch (error) {
       console.error("Error loading config:", error);
       toast.error("Erro ao carregar configuração");
@@ -65,22 +64,8 @@ const Index = () => {
   const saveConfig = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/config/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          apikey: apiKey,
-          doc: documentation,
-        }),
-      });
-
-      if (response.ok) {
-        toast.success("Configuração salva com sucesso!");
-      } else {
-        throw new Error("Failed to save config");
-      }
+      await saveConfigApi({ apikey: apiKey, doc: documentation });
+      toast.success("Configuração salva com sucesso!");
     } catch (error) {
       console.error("Error saving config:", error);
       toast.error("Erro ao salvar configuração");
@@ -101,35 +86,20 @@ const Index = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/chat/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          mensagem: message,
-          session: sessionId,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Update session ID
-        if (data.session) {
-          setSessionId(data.session);
-          localStorage.setItem("estoque_ai_session", data.session);
-        }
-
-        // Add system response to chat
-        const systemMessage: Message = { 
-          role: "system", 
-          content: data.resposta || "Resposta não encontrada" 
-        };
-        setMessages(prev => [...prev, systemMessage]);
-      } else {
-        throw new Error("Failed to send message");
+      const data = await sendMessageApi(message, sessionId);
+      
+      // Update session ID
+      if (data.session) {
+        setSessionId(data.session);
+        localStorage.setItem("estoque_ai_session", data.session);
       }
+
+      // Add system response to chat
+      const systemMessage: Message = { 
+        role: "system", 
+        content: data.resposta || "Resposta não encontrada" 
+      };
+      setMessages(prev => [...prev, systemMessage]);
     } catch (error) {
       console.error("Error sending message:", error);
       toast.error("Erro ao enviar mensagem");
@@ -155,9 +125,10 @@ const Index = () => {
 
   return (
     <div className="h-screen bg-gradient-background overflow-hidden">
-      <div className="grid grid-cols-12 h-full gap-6 p-6">
-        {/* Sidebar */}
-        <div className="col-span-3">
+      {/* Fixed Layout Container */}
+      <div className="h-full flex gap-6 p-6">
+        {/* Sidebar - Fixed width and height */}
+        <div className="w-80 flex-shrink-0">
           <Sidebar
             apiKey={apiKey}
             setApiKey={setApiKey}
@@ -169,8 +140,8 @@ const Index = () => {
           />
         </div>
 
-        {/* Main Chat Area */}
-        <div className="col-span-9">
+        {/* Main Chat Area - Flexible width, fixed height */}
+        <div className="flex-1 min-w-0">
           <ChatArea
             messages={messages}
             onSendMessage={sendMessage}

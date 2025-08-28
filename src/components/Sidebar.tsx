@@ -25,8 +25,9 @@ const Sidebar = ({
   isLoading = false
 }: SidebarProps) => {
   return (
-    <Card className="h-full bg-card border-border shadow-elevated">
-      <div className="p-6 space-y-6">
+    <Card className="h-full bg-card border-border shadow-elevated flex flex-col">
+      {/* Scrollable content area */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-6">
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="api-key" className="text-card-foreground font-medium">
@@ -55,8 +56,11 @@ const Sidebar = ({
             />
           </div>
         </div>
+      </div>
 
-        <div className="space-y-3 pt-4 border-t border-border">
+      {/* Fixed bottom area with buttons */}
+      <div className="p-6 pt-0 border-t border-border flex-shrink-0">
+        <div className="space-y-3">
           <Button
             onClick={onSaveConfig}
             disabled={isLoading}

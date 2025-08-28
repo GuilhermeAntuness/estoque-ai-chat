@@ -4,6 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Send, Bot } from "lucide-react";
 import ChatMessage from "./ChatMessage";
+import styles from "./ChatArea.module.css";
 
 interface Message {
   role: "user" | "system";
@@ -19,15 +20,18 @@ interface ChatAreaProps {
 const ChatArea = ({ messages, onSendMessage, isLoading = false }: ChatAreaProps) => {
   const [inputMessage, setInputMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading]);
 
   const handleSend = () => {
     if (inputMessage.trim() && !isLoading) {
@@ -45,8 +49,8 @@ const ChatArea = ({ messages, onSendMessage, isLoading = false }: ChatAreaProps)
 
   return (
     <div className="h-full flex flex-col">
-      {/* Header */}
-      <Card className="border-border shadow-lg mb-4">
+      {/* Header - Fixed height */}
+      <Card className="border-border shadow-lg mb-4 flex-shrink-0">
         <div className="p-6 text-center">
           <div className="flex items-center justify-center mb-3">
             <div className="p-3 bg-gradient-primary rounded-full shadow-glow">
@@ -62,67 +66,73 @@ const ChatArea = ({ messages, onSendMessage, isLoading = false }: ChatAreaProps)
         </div>
       </Card>
 
-      {/* Messages Area */}
-      <Card className="flex-1 border-border shadow-elevated overflow-hidden">
-        <div className="h-full flex flex-col">
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            {messages.length === 0 ? (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                  <div className="p-4 bg-muted rounded-full inline-block mb-4">
-                    <Bot className="w-12 h-12 text-muted-foreground" />
-                  </div>
-                  <p className="text-muted-foreground text-lg">
-                    Pronto para ajudar! Faça sua primeira pergunta.
-                  </p>
+      {/* Messages Container - Fixed height with scroll */}
+      <Card className="flex-1 border-border shadow-elevated flex flex-col min-h-0">
+        {/* Messages Area - Scrollable with precise height */}
+        <div 
+          ref={messagesContainerRef}
+          className={`flex-1 overflow-y-auto p-6 space-y-4 ${styles.messagesContainer}`}
+          style={{ 
+            height: 'calc(100vh - 280px)', // Precise height calculation
+            maxHeight: 'calc(100vh - 280px)' // Ensure it doesn't exceed
+          }}
+        >
+          {messages.length === 0 ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="p-4 bg-muted rounded-full inline-block mb-4">
+                  <Bot className="w-12 h-12 text-muted-foreground" />
                 </div>
+                <p className="text-muted-foreground text-lg">
+                  Pronto para ajudar! Faça sua primeira pergunta.
+                </p>
               </div>
-            ) : (
-              <>
-                {messages.map((message, index) => (
-                  <ChatMessage
-                    key={index}
-                    role={message.role}
-                    content={message.content}
-                  />
-                ))}
-                {isLoading && (
-                  <div className="flex justify-start">
-                    <div className="bg-card border border-border rounded-2xl px-4 py-3 shadow-lg">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-accent rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                      </div>
+            </div>
+          ) : (
+            <>
+              {messages.map((message, index) => (
+                <ChatMessage
+                  key={index}
+                  role={message.role}
+                  content={message.content}
+                />
+              ))}
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-card border border-border rounded-2xl px-4 py-3 shadow-lg">
+                    <div className="flex space-x-1">
+                      <div className="w-2 h-2 bg-accent rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                     </div>
                   </div>
-                )}
-              </>
-            )}
-            <div ref={messagesEndRef} />
-          </div>
+                </div>
+              )}
+            </>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
 
-          {/* Input Area */}
-          <div className="border-t border-border p-4">
-            <div className="flex gap-3">
-              <Textarea
-                ref={textareaRef}
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Pergunte alguma coisa..."
-                className="flex-1 min-h-[44px] max-h-32 resize-none bg-input border-border focus:ring-accent"
-                disabled={isLoading}
-              />
-              <Button
-                onClick={handleSend}
-                disabled={!inputMessage.trim() || isLoading}
-                size="icon"
-                className="bg-gradient-primary hover:opacity-90 text-primary-foreground shadow-glow min-w-[44px] h-[44px]"
-              >
-                <Send className="w-4 h-4" />
-              </Button>
-            </div>
+        {/* Input Area - Fixed height at bottom */}
+        <div className="border-t border-border p-4 flex-shrink-0">
+          <div className="flex gap-3">
+            <Textarea
+              ref={textareaRef}
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Pergunte alguma coisa..."
+              className="flex-1 min-h-[44px] max-h-32 resize-none bg-input border-border focus:ring-accent"
+              disabled={isLoading}
+            />
+            <Button
+              onClick={handleSend}
+              disabled={!inputMessage.trim() || isLoading}
+              size="icon"
+              className="bg-gradient-primary hover:opacity-90 text-primary-foreground shadow-glow min-w-[44px] h-[44px]"
+            >
+              <Send className="w-4 h-4" />
+            </Button>
           </div>
         </div>
       </Card>
