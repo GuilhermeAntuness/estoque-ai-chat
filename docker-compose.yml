@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # Serviço de desenvolvimento
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: estoque-ai-chat-dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./index.html:/app/index.html
+      - ./vite.config.ts:/app/vite.config.ts
+      - ./tailwind.config.ts:/app/tailwind.config.ts
+      - ./tsconfig.json:/app/tsconfig.json
+      - ./tsconfig.app.json:/app/tsconfig.app.json
+      - ./tsconfig.node.json:/app/tsconfig.node.json
+      - ./postcss.config.js:/app/postcss.config.js
+      - ./eslint.config.js:/app/eslint.config.js
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+    networks:
+      - estoque-ai-network
+    profiles:
+      - dev
+
+  # Serviço de produção
+  frontend-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: estoque-ai-chat-prod
+    ports:
+      - "80:80"
+    networks:
+      - estoque-ai-network
+    profiles:
+      - prod
+
+  # Backend mock para desenvolvimento (opcional)
+  backend-mock:
+    image: nginx:alpine
+    container_name: estoque-ai-backend-mock
+    ports:
+      - "8000:80"
+    volumes:
+      - ./mock-backend:/usr/share/nginx/html
+    networks:
+      - estoque-ai-network
+    profiles:
+      - dev
+      - mock
+
+  # Nginx reverso para produção (opcional)
+  nginx-reverse:
+    image: nginx:alpine
+    container_name: estoque-ai-nginx-reverse
+    ports:
+      - "443:443
+      - "80:80"
+    volumes:
+      - ./nginx-reverse.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    networks:
+      - estoque-ai-network
+    profiles:
+      - prod
+      - reverse
+
+networks:
+  estoque-ai-network:
+    driver: bridge
+
+volumes:
+  node_modules:
+    driver: local
